@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>VideoGen AI – Tạo Video Sản Phẩm Tự Động</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #090912;
+  --surface: #12121f;
+  --surface2: #1a1a2e;
+  --border: rgba(255,255,255,0.08);
+  --accent: #7C3AED;
+  --accent2: #F59E0B;
+  --accent3: #10B981;
+  --text: #F1F0FF;
+  --text2: #9B9BB4;
+  --glow: rgba(124, 58, 237, 0.35);
+  --radius: 18px;
+}
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+font-family: ‘DM Sans’, sans-serif;
+background: var(–bg);
+color: var(–text);
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+/* NOISE GRAIN */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image: url(“data:image/svg+xml,%3Csvg viewBox=‘0 0 256 256’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cfilter id=‘noise’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=‘0.9’ numOctaves=‘4’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘100%25’ height=‘100%25’ filter=‘url(%23noise)’ opacity=‘0.04’/%3E%3C/svg%3E”);
+pointer-events: none;
+z-index: 0;
+opacity: 0.6;
+}
+
+/* GRID BACKGROUND */
+body::after {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image:
+linear-gradient(rgba(124,58,237,0.03) 1px, transparent 1px),
+linear-gradient(90deg, rgba(124,58,237,0.03) 1px, transparent 1px);
+background-size: 60px 60px;
+pointer-events: none;
+z-index: 0;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 780px; margin: 0 auto; padding: 20px 16px 80px; }
+
+/* HEADER */
+.header {
+text-align: center;
+padding: 40px 0 32px;
+}
+
+.logo {
+display: inline-flex;
+align-items: center;
+gap: 10px;
+background: linear-gradient(135deg, var(–surface2), var(–surface));
+border: 1px solid var(–border);
+border-radius: 50px;
+padding: 8px 20px;
+margin-bottom: 28px;
+box-shadow: 0 0 30px var(–glow);
+}
+
+.logo-icon {
+width: 32px; height: 32px;
+background: linear-gradient(135deg, #7C3AED, #F59E0B);
+border-radius: 8px;
+display: grid; place-items: center;
+font-size: 16px;
+}
+
+.logo-text {
+font-family: ‘Syne’, sans-serif;
+font-weight: 800;
+font-size: 18px;
+background: linear-gradient(135deg, #A78BFA, #F59E0B);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+}
+
+h1 {
+font-family: ‘Syne’, sans-serif;
+font-size: clamp(28px, 6vw, 48px);
+font-weight: 800;
+line-height: 1.15;
+margin-bottom: 14px;
+}
+
+h1 span {
+background: linear-gradient(135deg, #A78BFA 0%, #F59E0B 50%, #10B981 100%);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+}
+
+.subtitle {
+color: var(–text2);
+font-size: 16px;
+line-height: 1.6;
+max-width: 500px;
+margin: 0 auto;
+}
+
+/* CARD */
+.card {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: var(–radius);
+padding: 28px;
+margin-bottom: 16px;
+position: relative;
+overflow: hidden;
+transition: border-color 0.3s;
+}
+
+.card::before {
+content: ‘’;
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 1px;
+background: linear-gradient(90deg, transparent, rgba(124,58,237,0.5), transparent);
+}
+
+.card-title {
+font-family: ‘Syne’, sans-serif;
+font-weight: 700;
+font-size: 15px;
+color: var(–text2);
+text-transform: uppercase;
+letter-spacing: 0.08em;
+margin-bottom: 16px;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.badge {
+background: linear-gradient(135deg, #7C3AED22, #7C3AED44);
+border: 1px solid rgba(124,58,237,0.3);
+color: #A78BFA;
+font-size: 11px;
+padding: 2px 8px;
+border-radius: 20px;
+font-weight: 600;
+}
+
+/* INPUT */
+.input-group {
+position: relative;
+margin-bottom: 14px;
+}
+
+.input-group input {
+width: 100%;
+background: var(–surface2);
+border: 1.5px solid var(–border);
+border-radius: 12px;
+padding: 14px 16px 14px 44px;
+color: var(–text);
+font-family: ‘DM Sans’, sans-serif;
+font-size: 15px;
+transition: all 0.25s;
+outline: none;
+}
+
+.input-group input:focus {
+border-color: var(–accent);
+box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+}
+
+.input-group input::placeholder { color: var(–text2); }
+
+.input-icon {
+position: absolute;
+left: 14px;
+top: 50%;
+transform: translateY(-50%);
+font-size: 18px;
+pointer-events: none;
+}
+
+/* DIVIDER */
+.or-divider {
+display: flex;
+align-items: center;
+gap: 12px;
+color: var(–text2);
+font-size: 13px;
+margin: 14px 0;
+}
+.or-divider::before, .or-divider::after {
+content: ‘’;
+flex: 1;
+height: 1px;
+background: var(–border);
+}
+
+/* UPLOAD ZONE */
+.upload-zone {
+border: 2px dashed var(–border);
+border-radius: 14px;
+padding: 32px 20px;
+text-align: center;
+cursor: pointer;
+transition: all 0.25s;
+position: relative;
+}
+
+.upload-zone:hover, .upload-zone.drag-over {
+border-color: var(–accent);
+background: rgba(124,58,237,0.05);
+}
+
+.upload-zone input[type=“file”] {
+position: absolute;
+inset: 0;
+opacity: 0;
+cursor: pointer;
+width: 100%;
+height: 100%;
+}
+
+.upload-icon {
+font-size: 36px;
+margin-bottom: 10px;
+display: block;
+}
+
+.upload-text {
+font-size: 15px;
+font-weight: 500;
+color: var(–text);
+margin-bottom: 4px;
+}
+
+.upload-hint {
+font-size: 13px;
+color: var(–text2);
+}
+
+.upload-preview {
+display: none;
+position: relative;
+}
+
+.upload-preview img {
+max-width: 100%;
+max-height: 200px;
+border-radius: 10px;
+object-fit: cover;
+}
+
+.remove-img {
+position: absolute;
+top: -8px; right: -8px;
+background: #EF4444;
+color: white;
+border: none;
+border-radius: 50%;
+width: 26px; height: 26px;
+cursor: pointer;
+font-size: 14px;
+display: grid;
+place-items: center;
+box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* BUTTON */
+.btn-create {
+width: 100%;
+background: linear-gradient(135deg, #7C3AED, #5B21B6);
+color: white;
+border: none;
+border-radius: 14px;
+padding: 18px;
+font-family: ‘Syne’, sans-serif;
+font-size: 18px;
+font-weight: 700;
+cursor: pointer;
+transition: all 0.25s;
+position: relative;
+overflow: hidden;
+letter-spacing: 0.02em;
+box-shadow: 0 4px 20px rgba(124,58,237,0.4);
+margin-top: 8px;
+}
+
+.btn-create::before {
+content: ‘’;
+position: absolute;
+inset: 0;
+background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+opacity: 0;
+transition: opacity 0.25s;
+}
+
+.btn-create:hover::before { opacity: 1; }
+.btn-create:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(124,58,237,0.5); }
+.btn-create:active { transform: translateY(0); }
+.btn-create:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* PROGRESS */
+.progress-card {
+display: none;
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: var(–radius);
+padding: 28px;
+margin-bottom: 16px;
+}
+
+.progress-step {
+font-size: 15px;
+font-weight: 500;
+color: var(–text);
+margin-bottom: 12px;
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+.spinner {
+width: 18px; height: 18px;
+border: 2px solid var(–border);
+border-top-color: var(–accent);
+border-radius: 50%;
+animation: spin 0.8s linear infinite;
+flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.progress-bar-wrap {
+background: var(–surface2);
+border-radius: 100px;
+height: 8px;
+overflow: hidden;
+margin-bottom: 10px;
+}
+
+.progress-bar-fill {
+height: 100%;
+background: linear-gradient(90deg, #7C3AED, #F59E0B);
+border-radius: 100px;
+transition: width 0.5s ease;
+position: relative;
+}
+
+.progress-bar-fill::after {
+content: ‘’;
+position: absolute;
+inset: 0;
+background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(200%); } }
+
+.progress-percent {
+font-size: 13px;
+color: var(–text2);
+text-align: right;
+}
+
+/* STEPS */
+.steps-list {
+display: flex;
+flex-direction: column;
+gap: 8px;
+margin-top: 16px;
+}
+
+.step-item {
+display: flex;
+align-items: center;
+gap: 10px;
+padding: 10px 14px;
+border-radius: 10px;
+background: var(–surface2);
+font-size: 14px;
+opacity: 0.4;
+transition: all 0.3s;
+}
+
+.step-item.active {
+opacity: 1;
+background: rgba(124,58,237,0.1);
+border: 1px solid rgba(124,58,237,0.2);
+}
+
+.step-item.done {
+opacity: 1;
+background: rgba(16,185,129,0.08);
+border: 1px solid rgba(16,185,129,0.2);
+color: #10B981;
+}
+
+.step-dot {
+width: 8px; height: 8px;
+border-radius: 50%;
+background: currentColor;
+flex-shrink: 0;
+}
+
+/* RESULT */
+.result-card {
+display: none;
+background: var(–surface);
+border: 1px solid rgba(16,185,129,0.3);
+border-radius: var(–radius);
+padding: 28px;
+margin-bottom: 16px;
+}
+
+.result-title {
+font-family: ‘Syne’, sans-serif;
+font-size: 20px;
+font-weight: 700;
+margin-bottom: 20px;
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+.result-title span { font-size: 24px; }
+
+.video-wrap {
+background: #000;
+border-radius: 14px;
+overflow: hidden;
+margin-bottom: 16px;
+position: relative;
+text-align: center;
+}
+
+.video-wrap video {
+max-width: 100%;
+max-height: 450px;
+display: block;
+margin: 0 auto;
+}
+
+.video-placeholder {
+padding: 60px 20px;
+color: var(–text2);
+font-size: 40px;
+}
+
+.btn-row {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 10px;
+margin-bottom: 20px;
+}
+
+.btn-action {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+padding: 13px 16px;
+border-radius: 12px;
+font-family: ‘DM Sans’, sans-serif;
+font-size: 14px;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.2s;
+text-decoration: none;
+border: none;
+}
+
+.btn-download {
+background: linear-gradient(135deg, #10B981, #059669);
+color: white;
+box-shadow: 0 4px 15px rgba(16,185,129,0.3);
+}
+
+.btn-download:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,0.4); }
+
+.btn-copy {
+background: var(–surface2);
+color: var(–text);
+border: 1px solid var(–border);
+}
+
+.btn-copy:hover { background: rgba(124,58,237,0.1); border-color: rgba(124,58,237,0.3); }
+.btn-copy.copied { color: #10B981; border-color: rgba(16,185,129,0.3); }
+
+/* CAPTION DISPLAY */
+.caption-section {
+margin-top: 20px;
+}
+
+.caption-label {
+font-size: 12px;
+font-weight: 600;
+text-transform: uppercase;
+letter-spacing: 0.08em;
+color: var(–text2);
+margin-bottom: 8px;
+}
+
+.caption-box {
+background: var(–surface2);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 14px;
+font-size: 14px;
+line-height: 1.7;
+color: var(–text);
+margin-bottom: 10px;
+white-space: pre-wrap;
+word-break: break-word;
+}
+
+.hashtag-box {
+background: rgba(124,58,237,0.08);
+border: 1px solid rgba(124,58,237,0.2);
+border-radius: 12px;
+padding: 14px;
+font-size: 14px;
+color: #A78BFA;
+line-height: 1.7;
+word-break: break-word;
+}
+
+/* CAPTION VARIANTS */
+.caption-tabs {
+display: flex;
+gap: 8px;
+margin-bottom: 12px;
+flex-wrap: wrap;
+}
+
+.tab-btn {
+padding: 6px 14px;
+border-radius: 8px;
+border: 1px solid var(–border);
+background: transparent;
+color: var(–text2);
+font-size: 13px;
+cursor: pointer;
+transition: all 0.2s;
+font-family: ‘DM Sans’, sans-serif;
+}
+
+.tab-btn.active {
+background: rgba(124,58,237,0.15);
+border-color: rgba(124,58,237,0.4);
+color: #A78BFA;
+}
+
+/* GUIDE BUTTON */
+.guide-fab {
+position: fixed;
+bottom: 24px;
+right: 20px;
+background: linear-gradient(135deg, #F59E0B, #D97706);
+color: white;
+border: none;
+border-radius: 50px;
+padding: 12px 20px;
+font-family: ‘Syne’, sans-serif;
+font-weight: 700;
+font-size: 14px;
+cursor: pointer;
+box-shadow: 0 4px 20px rgba(245,158,11,0.4);
+z-index: 100;
+display: flex;
+align-items: center;
+gap: 8px;
+transition: all 0.25s;
+}
+.guide-fab:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(245,158,11,0.5); }
+
+/* MODAL */
+.modal-overlay {
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.8);
+backdrop-filter: blur(8px);
+z-index: 200;
+display: none;
+place-items: center;
+padding: 20px;
+}
+
+.modal-overlay.open { display: grid; }
+
+.modal {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 24px;
+padding: 32px;
+max-width: 500px;
+width: 100%;
+max-height: 90vh;
+overflow-y: auto;
+position: relative;
+animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalIn {
+from { opacity: 0; transform: scale(0.9) translateY(20px); }
+to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-close {
+position: absolute;
+top: 16px; right: 16px;
+background: var(–surface2);
+border: 1px solid var(–border);
+color: var(–text2);
+width: 32px; height: 32px;
+border-radius: 50%;
+cursor: pointer;
+display: grid;
+place-items: center;
+font-size: 16px;
+transition: all 0.2s;
+}
+.modal-close:hover { background: rgba(239,68,68,0.2); color: #EF4444; }
+
+.modal h2 {
+font-family: ‘Syne’, sans-serif;
+font-size: 22px;
+font-weight: 800;
+margin-bottom: 6px;
+}
+
+.modal-subtitle {
+color: var(–text2);
+font-size: 14px;
+margin-bottom: 24px;
+}
+
+.guide-step {
+display: flex;
+gap: 14px;
+margin-bottom: 20px;
+align-items: flex-start;
+}
+
+.guide-num {
+width: 36px; height: 36px;
+flex-shrink: 0;
+background: linear-gradient(135deg, #7C3AED, #5B21B6);
+border-radius: 10px;
+display: grid;
+place-items: center;
+font-family: ‘Syne’, sans-serif;
+font-weight: 800;
+font-size: 16px;
+color: white;
+box-shadow: 0 4px 12px rgba(124,58,237,0.3);
+}
+
+.guide-step-content h3 {
+font-weight: 600;
+font-size: 15px;
+margin-bottom: 4px;
+}
+
+.guide-step-content p {
+font-size: 14px;
+color: var(–text2);
+line-height: 1.6;
+}
+
+/* TOAST */
+.toast {
+position: fixed;
+bottom: 80px;
+left: 50%;
+transform: translateX(-50%) translateY(20px);
+background: #10B981;
+color: white;
+padding: 12px 24px;
+border-radius: 50px;
+font-size: 14px;
+font-weight: 600;
+opacity: 0;
+transition: all 0.3s;
+z-index: 300;
+white-space: nowrap;
+}
+
+.toast.show {
+opacity: 1;
+transform: translateX(-50%) translateY(0);
+}
+
+/* ERROR */
+.error-msg {
+background: rgba(239,68,68,0.1);
+border: 1px solid rgba(239,68,68,0.3);
+border-radius: 12px;
+padding: 14px 16px;
+color: #FCA5A5;
+font-size: 14px;
+display: none;
+margin-top: 12px;
+}
+
+/* RESET BTN */
+.btn-reset {
+width: 100%;
+background: transparent;
+border: 1px solid var(–border);
+color: var(–text2);
+border-radius: 12px;
+padding: 13px;
+font-family: ‘DM Sans’, sans-serif;
+font-size: 14px;
+cursor: pointer;
+transition: all 0.2s;
+margin-top: 12px;
+}
+.btn-reset:hover { border-color: var(–accent); color: var(–text); }
+
+/* FOOTER */
+.footer {
+text-align: center;
+color: var(–text2);
+font-size: 13px;
+padding: 20px 0;
+}
+
+/* MOBILE */
+@media (max-width: 480px) {
+.card { padding: 20px 16px; }
+.btn-row { grid-template-columns: 1fr; }
+.guide-fab { bottom: 16px; right: 12px; padding: 12px 16px; font-size: 13px; }
+.modal { padding: 24px 20px; }
+}
+</style>
+
+</head>
+<body>
+
+<div class="wrap">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🎬</div>
+      <span class="logo-text">VideoGen AI</span>
+    </div>
+    <h1>Tạo <span>Video Marketing</span><br>Tự Động Bằng AI</h1>
+    <p class="subtitle">Chỉ cần dán link sản phẩm hoặc upload ảnh — AI sẽ tạo video + caption + hashtag sẵn sàng đăng TikTok</p>
+  </div>
+
+  <!-- INPUT CARD -->
+
+  <div class="card" id="inputCard">
+    <div class="card-title">
+      📎 Nguồn sản phẩm
+      <span class="badge">Bước 1</span>
+    </div>
+
+```
+<div class="input-group">
+  <span class="input-icon">🔗</span>
+  <input type="text" id="productUrl" placeholder="Dán link sản phẩm: Shopee, Lazada, Tiki..." />
+</div>
+
+<div class="or-divider">hoặc</div>
+
+<div class="upload-zone" id="uploadZone">
+  <input type="file" id="imageInput" accept="image/*">
+  <div id="uploadPlaceholder">
+    <span class="upload-icon">📸</span>
+    <div class="upload-text">Upload ảnh sản phẩm</div>
+    <div class="upload-hint">JPG, PNG, WebP · Tối đa 10MB</div>
+  </div>
+  <div class="upload-preview" id="uploadPreview">
+    <img id="previewImg" src="" alt="Preview">
+    <button class="remove-img" id="removeImg" onclick="removeImage(event)">✕</button>
+  </div>
+</div>
+
+<div class="error-msg" id="errorMsg"></div>
+
+<button class="btn-create" id="createBtn" onclick="startCreate()">
+  ✨ TẠO VIDEO NGAY
+</button>
+```
+
+  </div>
+
+  <!-- PROGRESS CARD -->
+
+  <div class="progress-card" id="progressCard">
+    <div class="card-title">⚙️ Đang xử lý...</div>
+    <div class="progress-step">
+      <div class="spinner"></div>
+      <span id="stepText">Đang chuẩn bị...</span>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="progress-percent" id="progressPercent">0%</div>
+
+```
+<div class="steps-list">
+  <div class="step-item" id="s1">
+    <div class="step-dot"></div> Phân tích sản phẩm
+  </div>
+  <div class="step-item" id="s2">
+    <div class="step-dot"></div> Tạo nội dung marketing
+  </div>
+  <div class="step-item" id="s3">
+    <div class="step-dot"></div> Render video
+  </div>
+  <div class="step-item" id="s4">
+    <div class="step-dot"></div> Tạo caption & hashtag
+  </div>
+  <div class="step-item" id="s5">
+    <div class="step-dot"></div> Hoàn tất
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- RESULT CARD -->
+
+  <div class="result-card" id="resultCard">
+    <div class="result-title">
+      <span>🎉</span> Video đã sẵn sàng!
+    </div>
+
+```
+<div class="video-wrap" id="videoWrap">
+  <div class="video-placeholder" id="videoPlaceholder">🎬</div>
+</div>
+
+<div class="btn-row">
+  <a id="downloadBtn" class="btn-action btn-download" href="#" download>
+    ⬇️ Tải Video
+  </a>
+  <button class="btn-action btn-copy" id="copyVideoLink" onclick="copyText('videoLink', this)">
+    🔗 Copy Link
+  </button>
+</div>
+
+<!-- CAPTION SECTION -->
+<div class="caption-section">
+  <div class="caption-label">📝 Caption TikTok</div>
+  <div class="caption-tabs" id="captionTabs"></div>
+  <div class="caption-box" id="captionBox"></div>
+  <div class="btn-row">
+    <button class="btn-action btn-copy" onclick="copyCaption(this)">📋 Copy Caption</button>
+    <button class="btn-action btn-copy" onclick="copyHashtag(this)">🏷️ Copy Hashtag</button>
+  </div>
+  <div class="caption-label" style="margin-top:16px">🏷️ Hashtag</div>
+  <div class="hashtag-box" id="hashtagBox"></div>
+</div>
+
+<button class="btn-reset" onclick="resetApp()">🔄 Tạo video mới</button>
+```
+
+  </div>
+
+  <div class="footer">
+    Powered by VideoGen AI · Hỗ trợ TikTok, Reels, Shorts
+  </div>
+</div>
+
+<!-- FAB BUTTON -->
+
+<button class="guide-fab" onclick="openGuide()">
+  📖 Hướng dẫn
+</button>
+
+<!-- GUIDE MODAL -->
+
+<div class="modal-overlay" id="guideModal" onclick="closeGuideOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeGuide()">✕</button>
+    <h2>📖 Hướng dẫn sử dụng</h2>
+    <p class="modal-subtitle">5 bước để có video TikTok chuyên nghiệp</p>
+
+```
+<div class="guide-step">
+  <div class="guide-num">1</div>
+  <div class="guide-step-content">
+    <h3>Nhập link hoặc upload ảnh</h3>
+    <p>Dán link sản phẩm từ Shopee, Lazada, Tiki... hoặc upload ảnh sản phẩm từ điện thoại/máy tính.</p>
+  </div>
+</div>
+
+<div class="guide-step">
+  <div class="guide-num">2</div>
+  <div class="guide-step-content">
+    <h3>Nhấn "TẠO VIDEO NGAY"</h3>
+    <p>Hệ thống AI sẽ tự động phân tích sản phẩm, tạo video và nội dung marketing.</p>
+  </div>
+</div>
+
+<div class="guide-step">
+  <div class="guide-num">3</div>
+  <div class="guide-step-content">
+    <h3>Đợi hệ thống xử lý</h3>
+    <p>Thường mất 15–60 giây. Theo dõi thanh tiến trình để biết trạng thái.</p>
+  </div>
+</div>
+
+<div class="guide-step">
+  <div class="guide-num">4</div>
+  <div class="guide-step-content">
+    <h3>Tải video + copy caption</h3>
+    <p>Nhấn "Tải Video" để lưu về máy. Nhấn "Copy Caption" và "Copy Hashtag" để lấy nội dung.</p>
+  </div>
+</div>
+
+<div class="guide-step">
+  <div class="guide-num">5</div>
+  <div class="guide-step-content">
+    <h3>Đăng lên TikTok / Reels</h3>
+    <p>Mở TikTok → nhấn dấu + → chọn video đã tải → dán caption → đăng!</p>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- TOAST -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentJob = null;
+let pollInterval = null;
+let captionData = [];
+let hashtagData = [];
+let activeCaptionIdx = 0;
+
+// Upload zone
+const imageInput = document.getElementById('imageInput');
+const uploadZone = document.getElementById('uploadZone');
+const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+const uploadPreview = document.getElementById('uploadPreview');
+const previewImg = document.getElementById('previewImg');
+
+imageInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) showPreview(file);
+});
+
+uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    imageInput.files = dt.files;
+    showPreview(file);
+  }
+});
+
+function showPreview(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    previewImg.src = e.target.result;
+    uploadPlaceholder.style.display = 'none';
+    uploadPreview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeImage(e) {
+  e.stopPropagation();
+  imageInput.value = '';
+  previewImg.src = '';
+  uploadPlaceholder.style.display = 'block';
+  uploadPreview.style.display = 'none';
+}
+
+// MAIN CREATE
+async function startCreate() {
+  const url = document.getElementById('productUrl').value.trim();
+  const file = imageInput.files[0];
+  const errEl = document.getElementById('errorMsg');
+  errEl.style.display = 'none';
+
+  if (!url && !file) {
+    errEl.textContent = '⚠️ Vui lòng nhập link sản phẩm hoặc upload ảnh trước khi tạo video.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  document.getElementById('createBtn').disabled = true;
+  document.getElementById('inputCard').style.display = 'none';
+  document.getElementById('progressCard').style.display = 'block';
+  document.getElementById('resultCard').style.display = 'none';
+
+  const formData = new FormData();
+  if (url) formData.append('product_url', url);
+  if (file) formData.append('image', file);
+
+  try {
+    const resp = await fetch('/api/create-video', { method: 'POST', body: formData });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.detail || 'Lỗi server');
+    currentJob = data.job_id;
+    startPolling(currentJob);
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+function startPolling(jobId) {
+  resetSteps();
+  pollInterval = setInterval(async () => {
+    try {
+      const resp = await fetch(`/api/job/${jobId}`);
+      const job = await resp.json();
+      updateProgress(job);
+      if (job.status === 'done' || job.status === 'error') {
+        clearInterval(pollInterval);
+        if (job.status === 'done') showResult(job.result);
+        else showError(job.step || 'Có lỗi xảy ra');
+      }
+    } catch (e) {}
+  }, 1200);
+}
+
+function updateProgress(job) {
+  document.getElementById('stepText').textContent = job.step || '';
+  const p = job.progress || 0;
+  document.getElementById('progressFill').style.width = p + '%';
+  document.getElementById('progressPercent').textContent = p + '%';
+
+  const stepMap = [
+    { id: 's1', threshold: 15 },
+    { id: 's2', threshold: 40 },
+    { id: 's3', threshold: 65 },
+    { id: 's4', threshold: 85 },
+    { id: 's5', threshold: 100 },
+  ];
+
+  stepMap.forEach(({ id, threshold }) => {
+    const el = document.getElementById(id);
+    el.className = 'step-item';
+    if (p >= threshold) el.classList.add('done');
+    else if (p >= threshold - 25) el.classList.add('active');
+  });
+}
+
+function resetSteps() {
+  ['s1','s2','s3','s4','s5'].forEach(id => {
+    document.getElementById(id).className = 'step-item';
+  });
+}
+
+function showResult(result) {
+  document.getElementById('progressCard').style.display = 'none';
+  const rc = document.getElementById('resultCard');
+  rc.style.display = 'block';
+
+  // Video
+  const videoWrap = document.getElementById('videoWrap');
+  const placeholder = document.getElementById('videoPlaceholder');
+  if (result.video_url) {
+    placeholder.style.display = 'none';
+    const vid = document.createElement('video');
+    vid.src = result.video_url;
+    vid.controls = true;
+    vid.playsInline = true;
+    vid.style.maxWidth = '100%';
+    vid.style.maxHeight = '450px';
+    videoWrap.appendChild(vid);
+
+    const dlBtn = document.getElementById('downloadBtn');
+    dlBtn.href = `/api/download/${result.video_filename}`;
+    dlBtn.download = result.video_filename;
+
+    document.getElementById('copyVideoLink').onclick = () => {
+      copyToClipboard(window.location.origin + result.video_url);
+    };
+  }
+
+  // Captions
+  captionData = result.captions || [];
+  hashtagData = result.hashtags || [];
+  activeCaptionIdx = 0;
+
+  const tabs = document.getElementById('captionTabs');
+  tabs.innerHTML = '';
+  captionData.forEach((_, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = `Phiên bản ${i + 1}`;
+    btn.onclick = () => switchCaption(i);
+    tabs.appendChild(btn);
+  });
+
+  if (captionData.length > 0) {
+    document.getElementById('captionBox').textContent = captionData[0];
+  }
+
+  document.getElementById('hashtagBox').textContent = result.main_hashtags || hashtagData[0] || '';
+
+  rc.scrollIntoView({ behavior: 'smooth' });
+}
+
+function switchCaption(idx) {
+  activeCaptionIdx = idx;
+  document.getElementById('captionBox').textContent = captionData[idx];
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.className = 'tab-btn' + (i === idx ? ' active' : '');
+  });
+  // Update hashtag too
+  if (hashtagData[idx]) {
+    document.getElementById('hashtagBox').textContent = hashtagData[idx];
+  }
+}
+
+function copyCaption(btn) {
+  const text = document.getElementById('captionBox').textContent;
+  copyToClipboard(text, btn);
+}
+
+function copyHashtag(btn) {
+  const text = document.getElementById('hashtagBox').textContent;
+  copyToClipboard(text, btn);
+}
+
+function copyText(type, btn) {
+  if (type === 'videoLink') {
+    const vid = document.querySelector('#videoWrap video');
+    if (vid) copyToClipboard(window.location.origin + vid.src.replace(window.location.origin, ''), btn);
+  }
+}
+
+function copyToClipboard(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('✅ Đã copy!');
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✅ Đã copy!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 2000);
+    }
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('✅ Đã copy!');
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function showError(msg) {
+  clearInterval(pollInterval);
+  document.getElementById('progressCard').style.display = 'none';
+  document.getElementById('inputCard').style.display = 'block';
+  document.getElementById('createBtn').disabled = false;
+  const errEl = document.getElementById('errorMsg');
+  errEl.textContent = '❌ ' + msg;
+  errEl.style.display = 'block';
+}
+
+function resetApp() {
+  clearInterval(pollInterval);
+  currentJob = null;
+  document.getElementById('productUrl').value = '';
+  imageInput.value = '';
+  previewImg.src = '';
+  uploadPlaceholder.style.display = 'block';
+  uploadPreview.style.display = 'none';
+  document.getElementById('errorMsg').style.display = 'none';
+  document.getElementById('createBtn').disabled = false;
+  document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('progressCard').style.display = 'none';
+  document.getElementById('inputCard').style.display = 'block';
+  // Remove old video
+  const vw = document.getElementById('videoWrap');
+  const oldVid = vw.querySelector('video');
+  if (oldVid) oldVid.remove();
+  document.getElementById('videoPlaceholder').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// GUIDE MODAL
+function openGuide() { document.getElementById('guideModal').classList.add('open'); }
+function closeGuide() { document.getElementById('guideModal').classList.remove('open'); }
+function closeGuideOutside(e) { if (e.target === document.getElementById('guideModal')) closeGuide(); }
+
+// Keyboard
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeGuide();
+  if (e.key === 'Enter' && document.activeElement === document.getElementById('productUrl')) startCreate();
+});
+</script>
+
+</body>
+</html>
